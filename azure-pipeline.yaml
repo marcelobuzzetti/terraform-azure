@@ -1,7 +1,28 @@
-- task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-cli.TerraformCLI@0
-  displayName: 'Run terraform plan'
+name: "Terraform Plan"
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+- task: TerraformInstaller@0
+  displayName: "Install Terraform"
   inputs:
-    command: plan
-    workingDirectory: $(terraformWorkingDirectory)
-    environmentServiceName: $(serviceConnection)
-    commandOptions: -var location=$(azureLocation)
+    terraformVersion: '3.0.0'
+    terraformDownloadLocation: 'https://releases.hashicorp.com/terraform'
+
+- script: |
+    terraform init
+    terraform plan -out=terraform.tfplan
+  displayName: 'Terraform Plan'
+  
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.SourcesDirectory)/terraform.tfplan'
+    artifactName: 'terraformPlan'
+    publishLocation: 'Container'
